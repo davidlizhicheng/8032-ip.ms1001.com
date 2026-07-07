@@ -2,8 +2,18 @@
 
 import Link from "next/link";
 import { Award, Building2, FileText, Layers, MapPin, Moon, PenLine, Sun, User } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BATCH_PRODUCTION_ENABLED, BATCH_PRODUCTION_CLOSED_HINT } from "@/lib/config/batch-production";
+
+const THEME_KEY = "ip-hero-theme";
+
+function readDefaultDark() {
+  if (typeof window === "undefined") return true;
+  const saved = localStorage.getItem(THEME_KEY);
+  if (saved === "light") return false;
+  if (saved === "dark") return true;
+  return true;
+}
 
 const cards = [
   { icon: Award, title: "品牌影响力名片榜", desc: "TOP 排名、AI 评分与名片展示", href: "/#brand-ranking", color: "text-fuchsia-500" },
@@ -13,7 +23,19 @@ const cards = [
 ];
 
 export function HomeHeroSwitcher() {
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] = useState(true);
+
+  useEffect(() => {
+    setDark(readDefaultDark());
+  }, []);
+
+  function toggleTheme() {
+    setDark((prev) => {
+      const next = !prev;
+      localStorage.setItem(THEME_KEY, next ? "dark" : "light");
+      return next;
+    });
+  }
 
   const actionBtn = dark
     ? "inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-6 py-3 text-sm font-bold text-white shadow-lg hover:bg-white/15"
@@ -38,7 +60,7 @@ export function HomeHeroSwitcher() {
       <div className="pointer-events-none absolute inset-0 opacity-30 [background-image:radial-gradient(currentColor_1px,transparent_1px)] [background-size:22px_22px]" />
       <button
         type="button"
-        onClick={() => setDark((v) => !v)}
+        onClick={toggleTheme}
         className={`absolute right-5 top-5 z-10 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold ${
           dark ? "border-white/20 bg-white/10 text-white" : "border-slate-200 bg-white text-slate-700"
         }`}
