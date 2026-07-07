@@ -30,10 +30,10 @@ import { resolveAssetUrl } from "@/lib/storage/public-url";
 import { ImageUploader } from "@/components/ui/ImageUploader";
 import { ImageSearchPanel } from "@/components/media/ImageSearchPanel";
 import { BrandImageGallery } from "@/components/media/BrandImageGallery";
+import { ClaimVerificationForm } from "@/components/claim/ClaimVerificationForm";
 import { VideoPreviewCard } from "@/components/ui/VideoPreviewCard";
 import {
   getDisclaimer,
-  AI_DISCLAIMER,
 } from "@/lib/compliance/risk-check";
 import {
   ENTITY_TYPE_LABELS,
@@ -285,7 +285,6 @@ export function EntityPageView({
   ];
 
   const [showClaim, setShowClaim] = useState(false);
-  const [claimForm, setClaimForm] = useState({ proofText: "", contactName: "", contactPhone: "" });
   const [claimMsg, setClaimMsg] = useState("");
   const [mediaImages, setMediaImages] = useState(entity.mediaAssets || []);
   const [mediaVideos, setMediaVideos] = useState(entity.videoLinks || []);
@@ -500,20 +499,6 @@ export function EntityPageView({
     } else {
       await handleUploadError(data);
     }
-  }
-
-  async function submitClaim() {
-    const res = await fetch("/api/claim", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        entityId: entity.id,
-        claimType: entity.type === "city" ? "city" : entity.type === "person" ? "person" : "company",
-        ...claimForm,
-      }),
-    });
-    const data = await res.json();
-    setClaimMsg(data.success ? "认领申请已提交，我们将尽快审核。" : data.error || "提交失败");
   }
 
   async function startEntityUpdate() {
@@ -1365,7 +1350,7 @@ export function EntityPageView({
             <div className="shrink-0 border-b border-slate-100 px-5 py-4 pr-16">
             <h3 className="text-lg font-semibold">认领 / 补充资料</h3>
             <p className="mt-1 text-xs text-slate-500">
-              可上传图片、添加视频链接（B站/YouTube/腾讯视频等），认领后管理员审核可见
+              提交执照/工牌、前台照片或公司邮箱等材料；管理员首次确认后您可随时修改档案
             </p>
 
             </div>
@@ -1441,36 +1426,21 @@ export function EntityPageView({
             {claimMsg ? (
               <p className="py-6 text-center text-green-600">{claimMsg}</p>
             ) : (
-              <div className="space-y-3">
-                <p className="text-xs font-medium text-slate-500">认领申请（可选）</p>
-                <p className="text-xs text-slate-400">{AI_DISCLAIMER}</p>
-                <input
-                  placeholder="您的姓名"
-                  className={`w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:ring-2 ${theme.border}`}
-                  value={claimForm.contactName}
-                  onChange={(e) => setClaimForm({ ...claimForm, contactName: e.target.value })}
-                />
-                <input
-                  placeholder="联系电话"
-                  className={`w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:ring-2 ${theme.border}`}
-                  value={claimForm.contactPhone}
-                  onChange={(e) => setClaimForm({ ...claimForm, contactPhone: e.target.value })}
-                />
-                <textarea
-                  placeholder="请说明认领理由或纠错内容"
-                  rows={4}
-                  className={`w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:ring-2 ${theme.border}`}
-                  value={claimForm.proofText}
-                  onChange={(e) => setClaimForm({ ...claimForm, proofText: e.target.value })}
-                />
-                <button
-                  type="button"
-                  onClick={submitClaim}
-                  className={`w-full rounded-xl py-3 text-sm font-semibold ${theme.button} ${theme.buttonText}`}
-                >
-                  提交申请
-                </button>
-              </div>
+              <ClaimVerificationForm
+                entityId={entity.id}
+                entitySlug={entity.slug}
+                claimType={
+                  entity.type === "city"
+                    ? "city"
+                    : entity.type === "person"
+                      ? "person"
+                      : entity.type === "brand"
+                        ? "brand"
+                        : "company"
+                }
+                themeButtonClass={`${theme.button} ${theme.buttonText}`}
+                onSuccess={setClaimMsg}
+              />
             )}
             </div>
             </div>

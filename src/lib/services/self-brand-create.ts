@@ -99,6 +99,10 @@ export async function createSelfBrandPage(input: SelfBrandInput) {
       slug: `${slug}-card`,
       exchangeEnabled: true,
       theme: type === "company" ? "brand_orange" : "brand_purple",
+      companySize: "small",
+      verificationMethod: "frontdesk_photos",
+      personalCommitment: true,
+      disclaimerAccepted: true,
     },
     input.ownerUserId,
   );
@@ -142,6 +146,6 @@ export async function createSelfBrandPage(input: SelfBrandInput) {
     entityHref: entityPath(type, slug),
     cardHref: `/u/${card.slug}`,
     reportHref,
-    editHint: "内容已保存为私密，您可随时在档案页点击「编辑页面」自行修改。",
+    editHint: "内容已保存为私密，您可随时编辑；首次公开需管理员确认认证材料，确认后可自行维护。",
   };
 }

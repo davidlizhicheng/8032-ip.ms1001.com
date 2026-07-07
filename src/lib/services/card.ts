@@ -116,20 +116,22 @@ export async function createCard(input: CreateCardInput, ownerUserId?: string) {
     sortOrder: order++,
   });
 
-  if (input.verificationMethod || input.verificationAccount || input.proofImages?.length) {
-    sections.push({
-      type: "verification",
-      title: "认证材料",
-      content: JSON.stringify({
-        status: "pending_review",
-        method: input.verificationMethod || "personal_commitment",
-        account: input.verificationAccount || "",
-        proofCount: input.proofImages?.length || 0,
-        note: "认证路径：1、执照或工牌；2、前台/门头照片；3、公司邮箱认证；4、个人承诺；5、网站免责申明。首次由管理员确认，确认后本人可维护名片内容。",
-      }),
-      sortOrder: order++,
-    });
-  }
+  const verificationMethod = input.verificationMethod || (input.companySize === "large" ? "company_email" : "frontdesk_photos");
+  sections.push({
+    type: "verification",
+    title: "认证材料",
+    content: JSON.stringify({
+      status: "pending_review",
+      method: verificationMethod,
+      account: input.verificationAccount || input.email || "",
+      companySize: input.companySize || "small",
+      proofCount: input.proofImages?.length || 0,
+      personalCommitment: Boolean(input.personalCommitment),
+      disclaimerAccepted: Boolean(input.disclaimerAccepted),
+      note: "认证路径：1、执照或工牌；2、前台/门头照片；3、公司邮箱认证（大公司回复即可）；4、个人承诺；5、网站免责申明。首次由管理员确认，确认后本人可维护名片内容。",
+    }),
+    sortOrder: order++,
+  });
 
   const card = await prisma.card.create({
     data: {

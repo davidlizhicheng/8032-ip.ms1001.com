@@ -29,10 +29,25 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         where: { id: claim.entityId },
         data: {
           status: "claimed",
+          isVerified: true,
           ownerUserId: claim.userId || undefined,
-          visibility: "private",
         },
       });
+
+      if (claim.userId) {
+        await prisma.entityEditor.upsert({
+          where: {
+            entityId_userId: { entityId: claim.entityId, userId: claim.userId },
+          },
+          create: {
+            entityId: claim.entityId,
+            userId: claim.userId,
+            role: "owner_delegate",
+            grantedBy: "claim_approved",
+          },
+          update: { role: "owner_delegate" },
+        });
+      }
     }
 
     await prisma.auditLog.create({

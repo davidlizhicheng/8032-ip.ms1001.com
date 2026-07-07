@@ -51,12 +51,22 @@ export function HomeWelcomeGuide() {
                 <h3 className="text-sm font-bold text-slate-900">{item.title}</h3>
               </div>
               <p className="mt-3 text-sm leading-7 text-slate-600">{item.desc}</p>
-              <Link
-                href={item.href}
-                className="mt-4 inline-flex text-sm font-semibold text-fuchsia-700 hover:text-fuchsia-900"
-              >
-                {item.cta} →
-              </Link>
+              <div className="mt-4 flex flex-col gap-2">
+                <Link
+                  href={item.href}
+                  className="inline-flex text-sm font-semibold text-fuchsia-700 hover:text-fuchsia-900"
+                >
+                  {item.cta} →
+                </Link>
+                {"secondaryHref" in item && item.secondaryHref && (
+                  <Link
+                    href={item.secondaryHref}
+                    className="inline-flex text-sm font-medium text-orange-700 hover:text-orange-900"
+                  >
+                    {item.secondaryCta} →
+                  </Link>
+                )}
+              </div>
             </article>
           );
         })}

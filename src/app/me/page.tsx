@@ -8,6 +8,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { authFetch } from "@/lib/auth/client";
 import { VISIBILITY_LABELS, type Visibility } from "@/lib/visibility";
 import { ExchangeInboxPanel } from "@/components/exchange/ExchangeInboxPanel";
+import { CARD_FIRST_PUBLISH_HINT } from "@/lib/config/claim-verification";
 
 type PageItem = {
   id: string;
@@ -136,7 +137,7 @@ function MeDashboardContent() {
         ) : (
           <>
             <p className="text-sm text-slate-600">
-              默认仅自己可见。设为「公开」后，将发布到全球品牌创新研究案例库与品牌影响力名片榜，并向品牌界推荐展示。
+              默认仅自己可见，您可随时编辑内容。{CARD_FIRST_PUBLISH_HINT} 设为「公开」后将发布到案例库与名片榜。
             </p>
             {msg && <p className="mt-3 text-sm text-green-600">{msg}</p>}
             {createdSlug && (

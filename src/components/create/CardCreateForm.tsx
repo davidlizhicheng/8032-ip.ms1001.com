@@ -12,6 +12,13 @@ import { resolveAssetUrl } from "@/lib/storage/public-url";
 import { THEMES } from "@/lib/themes";
 import type { ParsedCardInfo, CardTheme } from "@/lib/schemas/card";
 import type { VideoPreview } from "@/lib/schemas/card";
+import {
+  CLAIM_LARGE_COMPANY_HINT,
+  CLAIM_PERSONAL_COMMITMENT_TEXT,
+  CLAIM_SMALL_COMPANY_HINT,
+  CLAIM_WEBSITE_DISCLAIMER,
+  CARD_FIRST_PUBLISH_HINT,
+} from "@/lib/config/claim-verification";
 
 const SAMPLE_TEXT = "陈行甲 公益人物 个人品牌报告";
 
@@ -88,6 +95,9 @@ export function CardCreateForm() {
     exchangeEnabled: true,
     verificationMethod: "frontdesk_photos",
     verificationAccount: "",
+    companySize: "small" as "large" | "small",
+    personalCommitment: false,
+    disclaimerAccepted: false,
     theme: "brand_orange" as CardTheme,
     avatarUrl: "",
     coverUrl: "",
@@ -226,6 +236,9 @@ export function CardCreateForm() {
       exchangeEnabled: true,
       verificationMethod: "frontdesk_photos",
       verificationAccount: "",
+      companySize: "small",
+      personalCommitment: false,
+      disclaimerAccepted: false,
       theme: result.suggested_theme,
       avatarUrl: result.famousMedia?.avatarUrl || "",
       coverUrl: result.famousMedia?.coverUrl || "",
@@ -347,6 +360,23 @@ export function CardCreateForm() {
   async function handleSave() {
     if (!form.name.trim()) {
       setError("请填写姓名");
+      return;
+    }
+    if (!form.personalCommitment) {
+      setError("请勾选个人承诺");
+      return;
+    }
+    if (!form.disclaimerAccepted) {
+      setError("请阅读并同意网站免责申明");
+      return;
+    }
+    if (form.companySize === "large") {
+      if (!form.email?.includes("@") && !form.verificationAccount?.includes("@")) {
+        setError("大型企业请填写公司邮箱");
+        return;
+      }
+    } else if (proofImages.length < 3 || !proofImages[0]?.url) {
+      setError("中小企业请上传执照/工牌及至少 2 张前台/门头照片");
       return;
     }
     setSaving(true);
@@ -674,6 +704,37 @@ export function CardCreateForm() {
                 <ShieldCheck className="h-5 w-5 text-emerald-600" />
                 <h3 className="font-semibold text-slate-900">身份与公司认证材料</h3>
               </div>
+              <p className="mt-2 text-xs leading-5 text-slate-500">{CARD_FIRST_PUBLISH_HINT}</p>
+              <div className="mt-4 flex gap-2">
+                {(
+                  [
+                    { value: "small", label: "中小企业" },
+                    { value: "large", label: "大型企业" },
+                  ] as const
+                ).map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() =>
+                      setForm({
+                        ...form,
+                        companySize: opt.value,
+                        verificationMethod: opt.value === "large" ? "company_email" : "frontdesk_photos",
+                      })
+                    }
+                    className={`rounded-xl border px-3 py-2 text-xs font-semibold ${
+                      form.companySize === opt.value
+                        ? "border-orange-300 bg-orange-50 text-orange-800"
+                        : "border-slate-200 bg-white text-slate-600"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 text-xs leading-5 text-slate-500">
+                {form.companySize === "large" ? CLAIM_LARGE_COMPANY_HINT : CLAIM_SMALL_COMPANY_HINT}
+              </p>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <div>
                   <label className="text-sm font-medium text-slate-700">认证方式</label>
@@ -681,46 +742,75 @@ export function CardCreateForm() {
                     className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm"
                     value={form.verificationMethod}
                     onChange={(e) => setForm({ ...form, verificationMethod: e.target.value })}
+                    disabled={form.companySize === "large"}
                   >
                     <option value="license_or_badge">执照或工牌</option>
                     <option value="frontdesk_photos">公司前台/门头背景照片 2 张</option>
                     <option value="company_email">公司邮箱认证（回复即可）</option>
-                    <option value="personal_commitment">个人承诺</option>
-                    <option value="verified_account">其他已认证账号</option>
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-slate-700">公司邮箱 / 账号 / 说明</label>
+                  <label className="text-sm font-medium text-slate-700">公司邮箱 / 说明</label>
                   <input
                     className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm"
-                    placeholder="大公司可填公司邮箱；小公司可填执照/工牌/前台照说明"
-                    value={form.verificationAccount}
+                    placeholder={form.companySize === "large" ? "大公司填公司邮箱，回复即可" : "可选"}
+                    value={form.verificationAccount || form.email}
                     onChange={(e) => setForm({ ...form, verificationAccount: e.target.value })}
                   />
                 </div>
               </div>
-              <p className="mt-3 rounded-xl border border-white bg-white/70 px-3 py-2 text-xs leading-5 text-slate-500">
-                认证流程：第一次由管理员确认；确认后本人可随时维护名片内容。网站展示认证状态与免责申明，不代替工商、平台或官方认证。
-              </p>
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                {[0, 1].map((slot) => (
+              {form.companySize === "small" && (
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <ImageUploader
-                    key={slot}
-                    label={`公司前台/门头背景照片 ${slot + 1}`}
-                    value={proofImages[slot]?.url}
-                    uploadIndex={galleryImages.length + slot}
+                    label="执照或工牌"
+                    value={proofImages[0]?.url}
+                    uploadIndex={galleryImages.length}
                     onChange={(url) =>
                       setProofImages((prev) => {
                         const next = [...prev];
-                        next[slot] = { url, type: "gallery", title: `认证材料 ${slot + 1}` };
+                        next[0] = { url, type: "gallery", title: "执照或工牌" };
                         return next.filter(Boolean);
                       })
                     }
                     aspect="wide"
-                    hint="用于待核验提示，不公开等同官方认证"
                   />
-                ))}
-              </div>
+                  {[0, 1].map((slot) => (
+                    <ImageUploader
+                      key={slot}
+                      label={`公司前台/门头背景照片 ${slot + 1}`}
+                      value={proofImages[slot + 1]?.url}
+                      uploadIndex={galleryImages.length + slot + 1}
+                      onChange={(url) =>
+                        setProofImages((prev) => {
+                          const next = [...prev];
+                          next[slot + 1] = { url, type: "gallery", title: `认证材料 ${slot + 1}` };
+                          return next.filter(Boolean);
+                        })
+                      }
+                      aspect="wide"
+                      hint="用于待核验提示，不公开等同官方认证"
+                    />
+                  ))}
+                </div>
+              )}
+              <label className="mt-4 flex items-start gap-2 text-xs leading-5 text-slate-600">
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={form.personalCommitment}
+                  onChange={(e) => setForm({ ...form, personalCommitment: e.target.checked })}
+                />
+                <span>{CLAIM_PERSONAL_COMMITMENT_TEXT}</span>
+              </label>
+              <label className="mt-3 flex items-start gap-2 text-xs leading-5 text-slate-600">
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={form.disclaimerAccepted}
+                  onChange={(e) => setForm({ ...form, disclaimerAccepted: e.target.checked })}
+                />
+                <span>{CLAIM_WEBSITE_DISCLAIMER}</span>
+              </label>
             </div>
             <div className="mt-6">
               <ImageSearchPanel

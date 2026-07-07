@@ -197,6 +197,8 @@ model Entity {
   likes         EntityLike[]
   exchangesAsTarget CardExchange[] @relation("ExchangeTargetEntity")
   exchangesAsRequester CardExchange[] @relation("ExchangeRequesterEntity")
+  groupMemberships GroupMember[]
+  hostedGroups     OrganizationGroup[] @relation("GroupHost")
 
   @@index([type, status])
   @@index([type, visibility])
@@ -324,6 +326,13 @@ model ClaimRequest {
   claimType  String   @map("claim_type") // person | company | city
   proofText  String?  @map("proof_text")
   proofFiles String?  @map("proof_files")
+  companySize String? @map("company_size") // large | small
+  verificationMethod String? @map("verification_method")
+  contactName String? @map("contact_name")
+  contactPhone String? @map("contact_phone")
+  contactEmail String? @map("contact_email")
+  personalCommitment Boolean @default(false) @map("personal_commitment")
+  disclaimerAccepted Boolean @default(false) @map("disclaimer_accepted")
   status     String   @default("pending") // pending | approved | rejected
   reviewNote String?  @map("review_note")
   createdAt  DateTime @default(now()) @map("created_at")
@@ -455,4 +464,47 @@ model CardExchange {
   @@index([targetUserId, status])
   @@index([requesterUserId, status])
   @@map("card_exchanges")
+}
+
+model OrganizationGroup {
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  name            String
+  shortName       String?  @map("short_name")
+  subtitle        String?
+  description     String?
+  coverUrl        String?  @map("cover_url")
+  category        String   @default("association") // association | chapter | alumni
+  visibility      String   @default("public")
+  isFeatured      Boolean  @default(false) @map("is_featured")
+  manualRankOrder Int?     @map("manual_rank_order")
+  ownerUserId     String?  @map("owner_user_id")
+  hostEntityId    String?  @map("host_entity_id")
+  contactPhone    String?  @map("contact_phone")
+  contactEmail    String?  @map("contact_email")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  members    GroupMember[]
+  hostEntity Entity? @relation("GroupHost", fields: [hostEntityId], references: [id], onDelete: SetNull)
+
+  @@index([visibility, isFeatured])
+  @@index([manualRankOrder])
+  @@map("organization_groups")
+}
+
+model GroupMember {
+  id         String @id @default(cuid())
+  groupId    String @map("group_id")
+  entityId   String @map("entity_id")
+  memberRole String? @map("member_role")
+  sortOrder  Int    @default(0) @map("sort_order")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  group  OrganizationGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  entity Entity            @relation(fields: [entityId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, entityId])
+  @@index([groupId, sortOrder])
+  @@map("group_members")
 }

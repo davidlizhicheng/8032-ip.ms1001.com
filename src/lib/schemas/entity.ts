@@ -169,10 +169,23 @@ export const BatchJobSchema = z.object({
 export const ClaimRequestSchema = z.object({
   entityId: z.string(),
   claimType: z.enum(["person", "company", "city", "brand"]),
-  proofText: z.string().min(10, "è¯·è¯´æ˜Žè®¤é¢†ç†ç”±"),
-  contactName: z.string().optional(),
+  companySize: z.enum(["large", "small"]).default("small"),
+  verificationMethod: z.string().optional(),
+  proofText: z.string().optional(),
+  contactName: z.string().min(1, "请填写联系人姓名"),
   contactPhone: z.string().optional(),
   contactEmail: z.string().optional(),
+  proofFiles: z
+    .array(
+      z.object({
+        type: z.enum(["license_or_badge", "frontdesk", "work_badge", "other"]),
+        url: z.string().min(1),
+        title: z.string().optional(),
+      }),
+    )
+    .optional(),
+  personalCommitment: z.literal(true, { message: "请勾选个人承诺" }),
+  disclaimerAccepted: z.literal(true, { message: "请同意网站免责申明" }),
 });
 
 export type EntityContactInfo = {

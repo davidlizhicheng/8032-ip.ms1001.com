@@ -1,11 +1,13 @@
 import Link from "next/link";
-import { Building2, FileText, MapPin, Newspaper, Shield, Sparkles, User } from "lucide-react";
+import { Building2, FileText, MapPin, Newspaper, Shield, Sparkles, User, Users } from "lucide-react";
 import { AuthBar } from "@/components/auth/AuthBar";
+import { HomeGroupLibrarySection } from "@/components/home/HomeGroupLibrarySection";
 import { HomeRankingSection } from "@/components/home/HomeRankingSection";
 import { Xianglong18DetailSections } from "@/components/home/Xianglong18Showcase";
 import { HomeHeroSwitcher } from "@/components/home/HomeHeroSwitcher";
 import { HomeWelcomeGuide } from "@/components/home/HomeWelcomeGuide";
 import { getNewEntityIdsFromBatchJob } from "@/lib/services/entity";
+import { listFeaturedOrganizationGroups } from "@/lib/services/organization-group";
 import { getRankedPublicEntitiesByType } from "@/lib/services/content-visibility";
 import { rankEntitiesForDisplay } from "@/lib/scoring/entity-score";
 import { showcaseReportPath } from "@/lib/config/showcase-report";
@@ -36,13 +38,32 @@ async function safeBatchIds(jobId?: string) {
   }
 }
 
+async function safeFeaturedGroups() {
+  try {
+    const groups = await listFeaturedOrganizationGroups(6);
+    return groups.map((g) => ({
+      slug: g.slug,
+      name: g.name,
+      subtitle: g.subtitle,
+      description: g.description,
+      category: g.category,
+      coverUrl: g.coverUrl,
+      memberCount: g._count.members,
+    }));
+  } catch (error) {
+    console.warn("[home] featured groups unavailable:", error);
+    return [];
+  }
+}
+
 export default async function HomePage({ searchParams }: Props) {
   const params = await searchParams;
-  const [cities, companies, persons, highlightIds] = await Promise.all([
+  const [cities, companies, persons, highlightIds, featuredGroups] = await Promise.all([
     safeRanked("city"),
     safeRanked("company"),
     safeRanked("person"),
     safeBatchIds(params.fromBatch),
+    safeFeaturedGroups(),
   ]);
 
   const highlights = new Set(highlightIds);
@@ -112,8 +133,11 @@ export default async function HomePage({ searchParams }: Props) {
 
         <HomeWelcomeGuide />
 
-        <section className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <HomeGroupLibrarySection groups={featuredGroups} />
+
+        <section className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {[
+            { icon: Users, title: "团体案例（名片）库", desc: "协会分会、会员企业一览", href: "/library/groups", color: "text-rose-600", border: "hover:border-rose-300" },
             { icon: MapPin, title: "城市品牌库", desc: "城市定位、产业、招商", href: "/library/city", color: "text-sky-600", border: "hover:border-sky-300" },
             { icon: Building2, title: "企业品牌库", desc: "企业档案、竞品分析", href: "/library/company", color: "text-orange-600", border: "hover:border-orange-300" },
             { icon: User, title: "人物IP库", desc: "企业家、专家、达人", href: "/library/person", color: "text-purple-600", border: "hover:border-purple-300" },

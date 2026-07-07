@@ -19,7 +19,7 @@ export const PRODUCT_SCENARIO_2 =
 
 /** 场景 3：协会 / 总裁班批量 */
 export const PRODUCT_SCENARIO_3 =
-  "假如您是一家行业协会、社会组织或总裁班同学会，您只需在批量生成入口输入有公开报道的会员单位与个人名字，AI 智能系统将自动生成会员单位与个人的品牌研究报告与品牌名片，集中展示品牌形象、增进会员互相了解；后续可提交证明增加电话与联系方式。";
+  "假如您是一家行业协会、社会组织或总裁班同学会，您只需在批量生成入口输入有公开报道的会员单位与个人名字，AI 智能系统将自动生成会员单位与个人的品牌研究报告与品牌名片，整体加入「团体案例（名片）库」集中展示，为会员提供展示平台、增进互相了解；后续可提交证明增加电话与联系方式。";
 
 export const PRODUCT_SCENARIOS = [
   {
@@ -43,6 +43,8 @@ export const PRODUCT_SCENARIOS = [
     desc: PRODUCT_SCENARIO_3,
     href: "/admin/batch",
     cta: "进入批量生成入口",
+    secondaryHref: "/library/groups",
+    secondaryCta: "浏览团体案例（名片）库",
   },
 ] as const;
 

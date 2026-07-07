@@ -108,9 +108,66 @@ async function seedEntities() {
   }
 }
 
+async function seedOrganizationGroups() {
+  const demo = {
+    slug: "demo-sz-entrepreneurs",
+    name: "深圳企业家协会名片库",
+    subtitle: "分会名片库 · 示例",
+    description:
+      "为会员单位提供统一品牌展示平台，一览各家企业品牌档案与核心人物名片，增进会员互相了解。",
+    category: "chapter",
+    isFeatured: true,
+    manualRankOrder: 1,
+    memberSlugs: [
+      { slug: "huawei", role: "会长单位" },
+      { slug: "tencent", role: "理事单位" },
+      { slug: "byd", role: "理事单位" },
+      { slug: "dji", role: "会员单位" },
+      { slug: "renzhengfei", role: "名誉会长" },
+      { slug: "ponyma", role: "副会长" },
+    ],
+  };
+
+  const existing = await prisma.organizationGroup.findUnique({ where: { slug: demo.slug } });
+  if (existing) {
+    console.log(`Skip existing group: ${demo.name}`);
+    return;
+  }
+
+  const group = await prisma.organizationGroup.create({
+    data: {
+      slug: demo.slug,
+      name: demo.name,
+      subtitle: demo.subtitle,
+      description: demo.description,
+      category: demo.category,
+      visibility: "public",
+      isFeatured: demo.isFeatured,
+      manualRankOrder: demo.manualRankOrder,
+    },
+  });
+
+  let order = 0;
+  for (const item of demo.memberSlugs) {
+    const entity = await prisma.entity.findUnique({ where: { slug: item.slug } });
+    if (!entity) continue;
+    await prisma.groupMember.create({
+      data: {
+        groupId: group.id,
+        entityId: entity.id,
+        memberRole: item.role,
+        sortOrder: order++,
+      },
+    }).catch(() => {});
+  }
+
+  console.log(`Seeded organization group: ${demo.name}`);
+}
+
 async function main() {
   await seedCard();
   await seedEntities();
+  await seedOrganizationGroups();
   console.log("Seed complete!");
 }
 
