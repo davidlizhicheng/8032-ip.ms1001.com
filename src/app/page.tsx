@@ -4,6 +4,7 @@ import { AuthBar } from "@/components/auth/AuthBar";
 import { HomeRankingSection } from "@/components/home/HomeRankingSection";
 import { Xianglong18DetailSections } from "@/components/home/Xianglong18Showcase";
 import { HomeHeroSwitcher } from "@/components/home/HomeHeroSwitcher";
+import { HomeWelcomeGuide } from "@/components/home/HomeWelcomeGuide";
 import { getNewEntityIdsFromBatchJob } from "@/lib/services/entity";
 import { getRankedPublicEntitiesByType } from "@/lib/services/content-visibility";
 import { rankEntitiesForDisplay } from "@/lib/scoring/entity-score";
@@ -81,21 +82,35 @@ export default async function HomePage({ searchParams }: Props) {
               </span>
             </span>
           )}
+          <Link href="/me?tab=exchanges" className="hidden text-sm text-slate-600 hover:text-purple-600 sm:block">
+            名片夹
+          </Link>
           <Link href="/me" className="hidden text-sm text-slate-600 hover:text-purple-600 sm:block">
             我的品牌页
           </Link>
+          <Link href="/start" className="hidden text-sm font-semibold text-purple-700 hover:text-purple-900 sm:block">
+            自助入驻
+          </Link>
           <AuthBar />
+          <Link
+            href="/start"
+            className="hidden rounded-full border border-purple-200 bg-purple-50 px-4 py-2 text-sm font-semibold text-purple-800 sm:inline-flex"
+          >
+            不知名？自助填写
+          </Link>
           <Link
             href="/report/generate"
             className="rounded-full bg-gradient-to-r from-fuchsia-600 to-orange-500 px-5 py-2 text-sm font-semibold text-white shadow-md"
           >
-            生成案例报告（推荐）
+            品牌案例生成
           </Link>
         </div>
       </header>
 
       <main className="relative mx-auto max-w-6xl px-6 pb-20">
         <HomeHeroSwitcher />
+
+        <HomeWelcomeGuide />
 
         <section className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[

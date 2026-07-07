@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Award, Building2, FileText, Layers, MapPin, Moon, Sun, User } from "lucide-react";
+import { Award, Building2, FileText, Layers, MapPin, Moon, PenLine, Sun, User } from "lucide-react";
 import { useState } from "react";
 import { BATCH_PRODUCTION_ENABLED, BATCH_PRODUCTION_CLOSED_HINT } from "@/lib/config/batch-production";
 
@@ -66,7 +66,7 @@ export function HomeHeroSwitcher() {
         <div className={`mx-auto mt-6 grid max-w-3xl gap-2 text-left text-xs sm:grid-cols-3 ${dark ? "text-red-50" : "text-slate-600"}`}>
           {[
             ["榜单排名", "管理员可调顺序，未设置时自动排名"],
-            ["名片交换", "本人可公开电话、Logo、详细地址"],
+            ["名片交换", "企业与个人均可公开电话、Logo、详细地址"],
             ["身份核验", "前台照片 2 张或认证账号待核验"],
           ].map(([title, desc]) => (
             <div
@@ -79,14 +79,18 @@ export function HomeHeroSwitcher() {
           ))}
         </div>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Link href="/report/generate" className={actionBtn}>
+          <Link href="/start" className={actionBtn}>
+            <PenLine className="h-4 w-4" />
+            自助入驻（不知名也可）
+          </Link>
+          <Link href="/report/generate" className={actionBtnAlt}>
             <Layers className="h-4 w-4" />
-            生成案例报告（推荐）
+            品牌案例生成
           </Link>
           {BATCH_PRODUCTION_ENABLED ? (
             <Link href="/admin/batch" className={actionBtnAlt}>
               <FileText className="h-4 w-4" />
-              批量生成
+              协会批量生成
             </Link>
           ) : (
             <span className={batchDisabled} title={BATCH_PRODUCTION_CLOSED_HINT}>

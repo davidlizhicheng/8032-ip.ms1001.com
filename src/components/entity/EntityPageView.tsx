@@ -15,6 +15,7 @@ import {
   MessageCircle,
   Newspaper,
   Phone,
+  Mail,
   Send,
   Shield,
   Sparkles,
@@ -41,6 +42,12 @@ import {
   type EntityReportContent,
   type EntityReportScores,
 } from "@/lib/schemas/entity";
+import {
+  hasPublicContact,
+  mergeContactIntoContentJson,
+  parseEntityContact,
+  type EntityContactInfo,
+} from "@/lib/content/entity-contact";
 import { entityPath, reportPath } from "@/lib/utils/entity-paths";
 import { GenerateReportButton } from "@/components/report/GenerateReportButton";
 import { GenerationProgressPanel } from "@/components/report/GenerationProgressPanel";
@@ -163,10 +170,15 @@ function parseProfile(json: string): EntityProfileContent {
     return {
       ...parsed,
       sections: sanitizeSections(parsed.sections || []),
+      contact: parseEntityContact(json),
     };
   } catch {
     return { sections: [], tags: [], keywords: [] };
   }
+}
+
+function emptyContactDraft(): EntityContactInfo {
+  return { phone: "", email: "", wechat: "", address: "" };
 }
 
 function ScoreRing({ score, accentClass }: { score: number; accentClass: string }) {
@@ -250,6 +262,9 @@ export function EntityPageView({
   const typeLabel = ENTITY_TYPE_LABELS[entity.type as keyof typeof ENTITY_TYPE_LABELS] || entity.type;
   const subtypeLabel = entity.subtype ? PERSON_SUBTYPE_LABELS[entity.subtype] : null;
   const isCity = entity.type === "city";
+  const isCompanyCard = entity.type === "company" || entity.type === "brand";
+  const publicContact = content.contact || {};
+  const showPublicContact = isCompanyCard && hasPublicContact(publicContact);
   const showBrandImages = Boolean(mapSearchEntityType(entity.type));
 
   const latestReport = entity.reports[0];
@@ -310,6 +325,10 @@ export function EntityPageView({
     theme: entity.profile?.theme || "",
     visibility: entity.visibility || "private",
     status: entity.status,
+    contact: {
+      ...emptyContactDraft(),
+      ...parseEntityContact(entity.profile?.contentJson),
+    },
   });
   const [reportDraft, setReportDraft] = useState({
     reportId: latestReport?.id || "",
@@ -357,9 +376,14 @@ export function EntityPageView({
     setSavingEditor(true);
     setEditorMsg("保存中...");
     try {
+      const { contact, contentJson, ...rest } = editDraft;
       const res = await authFetch(`/api/entities/${entity.slug}/content`, {
         method: "PATCH",
-        body: JSON.stringify({ ...editDraft, note: "页面内可视化编辑" }),
+        body: JSON.stringify({
+          ...rest,
+          contentJson: mergeContactIntoContentJson(contentJson, contact),
+          note: "页面内可视化编辑",
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "保存失败");
@@ -531,7 +555,7 @@ export function EntityPageView({
     setSubmittingContact(true);
     setContactMsg("");
     try {
-      const res = await fetch(`/api/entities/${entity.slug}/contact`, {
+      const res = await authFetch(`/api/entities/${entity.slug}/contact`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -542,7 +566,7 @@ export function EntityPageView({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "提交失败");
-      setContactMsg(source === "online_chat" ? "消息已发送，品牌方可在后台查看并回复。" : "名片交换请求已提交。");
+      setContactMsg(data.message || (source === "online_chat" ? "消息已发送。" : "名片交换请求已提交。"));
       if (source === "online_chat") setChatText("");
       if (source === "exchange_card") {
         setExchangeForm({ visitorName: "", visitorPhone: "", visitorWechat: "", message: "" });
@@ -744,12 +768,102 @@ export function EntityPageView({
           </section>
         )}
 
+        {isCompanyCard && canEditPage && !showPublicContact && (
+          <section className={`-mt-12 rounded-2xl border border-dashed border-orange-200 bg-orange-50/40 p-5 sm:p-6 ${theme.border}`}>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">补充企业联系电话</h2>
+                <p className="mt-1 text-sm text-slate-600">
+                  可在「编辑页面」中添加公司电话、邮箱与地址，访客即可直接联系并交换名片。
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={openPageEditor}
+                className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-600"
+              >
+                <Phone className="h-4 w-4" />
+                添加联系方式
+              </button>
+            </div>
+          </section>
+        )}
+
+        {showPublicContact && (
+          <section className={`-mt-12 rounded-2xl border bg-white p-5 shadow-sm sm:p-6 ${theme.border}`}>
+            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className={`text-xs font-semibold uppercase tracking-widest ${theme.scoreAccent}`}>Business Card</p>
+                <h2 className="text-xl font-bold text-slate-900">企业名片联系方式</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  认证后可补充电话、邮箱与地址，便于访客直接联系与名片交换。
+                </p>
+              </div>
+              {canEditPage && (
+                <button
+                  type="button"
+                  onClick={openPageEditor}
+                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-orange-300 hover:text-orange-600"
+                >
+                  编辑联系方式
+                </button>
+              )}
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {publicContact.phone && (
+                <a
+                  href={`tel:${publicContact.phone}`}
+                  className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-800 transition hover:border-orange-200 hover:bg-orange-50/60"
+                >
+                  <Phone className={`h-4 w-4 shrink-0 ${theme.iconText}`} />
+                  <span>
+                    <span className="block text-xs text-slate-500">联系电话</span>
+                    <span className="font-semibold">{publicContact.phone}</span>
+                  </span>
+                </a>
+              )}
+              {publicContact.email && (
+                <a
+                  href={`mailto:${publicContact.email}`}
+                  className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-800 transition hover:border-orange-200 hover:bg-orange-50/60"
+                >
+                  <Mail className={`h-4 w-4 shrink-0 ${theme.iconText}`} />
+                  <span>
+                    <span className="block text-xs text-slate-500">邮箱</span>
+                    <span className="font-semibold break-all">{publicContact.email}</span>
+                  </span>
+                </a>
+              )}
+              {publicContact.wechat && (
+                <div className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-800">
+                  <MessageCircle className={`h-4 w-4 shrink-0 ${theme.iconText}`} />
+                  <span>
+                    <span className="block text-xs text-slate-500">微信</span>
+                    <span className="font-semibold">{publicContact.wechat}</span>
+                  </span>
+                </div>
+              )}
+              {publicContact.address && (
+                <div className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-800 sm:col-span-2">
+                  <MapPin className={`h-4 w-4 shrink-0 ${theme.iconText}`} />
+                  <span>
+                    <span className="block text-xs text-slate-500">地址</span>
+                    <span className="font-semibold">{publicContact.address}</span>
+                  </span>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
         <section id="entity-contact" className={`rounded-2xl border bg-white p-5 shadow-sm sm:p-6 ${theme.border}`}>
           <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className={`text-xs font-semibold uppercase tracking-widest ${theme.scoreAccent}`}>Contact</p>
               <h2 className="text-xl font-bold text-slate-900">交换名片 / 线上聊天</h2>
-              <p className="mt-1 text-sm text-slate-500">留下联系方式或直接发起咨询，线索会进入品牌方后台。</p>
+              <p className="mt-1 text-sm text-slate-500">
+                交换名片需对方在「名片夹」同意后，双方才可互看完整联系方式；留言将同步进入对方收件箱。
+              </p>
             </div>
             <div className="flex gap-2 text-xs text-slate-500">
               <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1">
@@ -1132,6 +1246,42 @@ export function EntityPageView({
                     className="mt-1 min-h-28 w-full rounded-xl border bg-white px-3 py-2 text-sm leading-6 text-slate-900 outline-none focus:border-orange-400"
                   />
                 </label>
+                {(entity.type === "company" || entity.type === "brand") && (
+                  <div className="rounded-xl border border-orange-100 bg-orange-50/50 p-4">
+                    <p className="text-sm font-semibold text-slate-900">企业名片联系方式</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                      填写后将展示在企业名片页，便于访客直接拨打或联系。请确保信息真实，并配合认证材料使用。
+                    </p>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      {(
+                        [
+                          ["phone", "联系电话（可公开）"],
+                          ["email", "邮箱"],
+                          ["wechat", "微信"],
+                          ["address", "公司地址"],
+                        ] as const
+                      ).map(([key, label]) => (
+                        <label
+                          key={key}
+                          className={`block text-xs font-semibold text-slate-500 ${key === "address" ? "sm:col-span-2" : ""}`}
+                        >
+                          {label}
+                          <input
+                            value={editDraft.contact[key] || ""}
+                            onChange={(event) =>
+                              setEditDraft((prev) => ({
+                                ...prev,
+                                contact: { ...prev.contact, [key]: event.target.value },
+                              }))
+                            }
+                            placeholder={key === "phone" ? "例如：0755-88888888 或 13800138000" : ""}
+                            className="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm font-normal text-slate-900 outline-none focus:border-orange-400"
+                          />
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <label className="block text-xs font-semibold text-slate-500">
                   页面内容 JSON
                   <textarea

@@ -2,6 +2,11 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { AuthBar } from "@/components/auth/AuthBar";
 import { QuickReportForm } from "@/components/report/QuickReportForm";
+import {
+  PRODUCT_SCENARIO_1,
+  PRODUCT_SITE_NAMES,
+  PRODUCT_WELCOME_TITLE,
+} from "@/lib/config/product-copy";
 
 export const metadata = {
   title: "生成品牌报告 | 降龙18掌",
@@ -37,6 +42,18 @@ export default async function ReportGeneratePage({ searchParams }: Props) {
         </div>
       </header>
       <main className="mx-auto max-w-2xl px-4 py-8">
+        <section className="mb-6 rounded-2xl border border-fuchsia-100 bg-white p-5 shadow-sm">
+          <h2 className="text-base font-bold text-slate-900">{PRODUCT_WELCOME_TITLE}</h2>
+          <p className="mt-1 text-xs text-slate-500">{PRODUCT_SITE_NAMES.join(" · ")}</p>
+          <p className="mt-3 text-sm leading-7 text-slate-600">{PRODUCT_SCENARIO_1}</p>
+          <p className="mt-3 text-xs text-slate-500">
+            暂无公开报道？请使用{" "}
+            <Link href="/start" className="font-semibold text-purple-700 hover:underline">
+              自助入驻
+            </Link>
+            ，直接填写自己的内容生成并可随时修改。
+          </p>
+        </section>
         <QuickReportForm initialName={initialName} initialEntityType={initialEntityType} />
       </main>
     </div>

@@ -175,10 +175,18 @@ export const ClaimRequestSchema = z.object({
   contactEmail: z.string().optional(),
 });
 
+export type EntityContactInfo = {
+  phone?: string;
+  email?: string;
+  wechat?: string;
+  address?: string;
+};
+
 export type EntityProfileContent = {
   sections: Array<{ type: string; title: string; content: string }>;
   tags: string[];
   keywords: string[];
+  contact?: EntityContactInfo;
 };
 
 export type EntityReportContent = {

@@ -21,6 +21,8 @@ model User {
   entityEditors   EntityEditor[]
   contentRevisions ContentRevision[]
   brandUpgrades   BrandUpgradeOrder[]
+  exchangesSent     CardExchange[] @relation("ExchangeRequester")
+  exchangesReceived CardExchange[] @relation("ExchangeTarget")
 
   @@map("users")
 }
@@ -76,6 +78,8 @@ model Card {
   leads           Lead[]
   analyticsEvents AnalyticsEvent[]
   brandUpgrades   BrandUpgradeOrder[]
+  exchangesAsTarget CardExchange[] @relation("ExchangeTargetCard")
+  exchangesAsRequester CardExchange[] @relation("ExchangeRequesterCard")
 
   @@index([visibility])
   @@index([manualRankOrder])
@@ -191,6 +195,8 @@ model Entity {
   brandUpgrades BrandUpgradeOrder[]
   knowledgeSnapshots KnowledgeSnapshot[]
   likes         EntityLike[]
+  exchangesAsTarget CardExchange[] @relation("ExchangeTargetEntity")
+  exchangesAsRequester CardExchange[] @relation("ExchangeRequesterEntity")
 
   @@index([type, status])
   @@index([type, visibility])
@@ -415,4 +421,38 @@ model EntityLike {
   @@unique([entityId, visitorKey])
   @@index([entityId])
   @@map("entity_likes")
+}
+
+model CardExchange {
+  id                String    @id @default(cuid())
+  status            String    @default("pending") // pending | accepted | rejected
+  message           String?
+
+  requesterUserId   String?   @map("requester_user_id")
+  requesterCardId   String?   @map("requester_card_id")
+  requesterEntityId String?   @map("requester_entity_id")
+
+  targetUserId      String?   @map("target_user_id")
+  targetCardId      String?   @map("target_card_id")
+  targetEntityId    String?   @map("target_entity_id")
+
+  visitorName       String?   @map("visitor_name")
+  visitorPhone      String?   @map("visitor_phone")
+  visitorWechat     String?   @map("visitor_wechat")
+  visitorMessage    String?   @map("visitor_message")
+
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  respondedAt       DateTime? @map("responded_at")
+
+  requesterUser     User?     @relation("ExchangeRequester", fields: [requesterUserId], references: [id], onDelete: SetNull)
+  targetUser        User?     @relation("ExchangeTarget", fields: [targetUserId], references: [id], onDelete: SetNull)
+  requesterCard     Card?     @relation("ExchangeRequesterCard", fields: [requesterCardId], references: [id], onDelete: SetNull)
+  targetCard        Card?     @relation("ExchangeTargetCard", fields: [targetCardId], references: [id], onDelete: SetNull)
+  requesterEntity   Entity?   @relation("ExchangeRequesterEntity", fields: [requesterEntityId], references: [id], onDelete: SetNull)
+  targetEntity      Entity?   @relation("ExchangeTargetEntity", fields: [targetEntityId], references: [id], onDelete: SetNull)
+
+  @@index([targetUserId, status])
+  @@index([requesterUserId, status])
+  @@map("card_exchanges")
 }

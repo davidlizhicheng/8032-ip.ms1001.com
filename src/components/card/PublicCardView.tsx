@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { VideoPreviewCard } from "@/components/ui/VideoPreviewCard";
 import { BrandMediaTools } from "@/components/brand/BrandMediaTools";
+import { authFetch } from "@/lib/auth/client";
 import { getTheme } from "@/lib/themes";
 import { resolveAssetUrl } from "@/lib/storage/public-url";
 
@@ -118,19 +119,24 @@ export function PublicCardView({ card }: { card: CardData }) {
     card.sections.filter((s) => !["avatar", "cover", "exchange", "verification"].includes(s.type)),
   );
 
+  const [submitMsg, setSubmitMsg] = useState("");
+
   async function submitLead(source: string) {
     setSubmitting(true);
     try {
-      await fetch("/api/leads", {
+      const res = await authFetch("/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ cardId: card.id, ...leadForm, source }),
       });
+      const data = await res.json();
+      setSubmitMsg(data.message || "提交成功，感谢关注！");
       setSubmitted(true);
       setTimeout(() => {
         setShowLeadModal(false);
         setSubmitted(false);
-      }, 1500);
+        setSubmitMsg("");
+      }, 2200);
     } finally {
       setSubmitting(false);
     }
@@ -471,7 +477,7 @@ export function PublicCardView({ card }: { card: CardData }) {
               </button>
             </div>
             {submitted ? (
-              <p className="py-8 text-center text-green-600">提交成功，感谢关注！</p>
+              <p className="py-8 text-center text-green-600">{submitMsg || "提交成功，感谢关注！"}</p>
             ) : (
               <div className="space-y-3">
                 <input placeholder="您的姓名" className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm" value={leadForm.visitorName} onChange={(e) => setLeadForm({ ...leadForm, visitorName: e.target.value })} />
