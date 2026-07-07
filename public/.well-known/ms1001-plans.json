@@ -1,0 +1,20 @@
+{
+  "platformKey": "ip.ms1001.com",
+  "version": "2026-06-27",
+  "updatedAt": "2026-06-27T00:00:00.000Z",
+  "plans": [
+    {
+      "id": "free",
+      "label": "免费版",
+      "rank": 1,
+      "benefits": ["创建个人名片", "基础展示", "单张头像"]
+    },
+    {
+      "id": "brand_upgrade_500",
+      "label": "品牌升级",
+      "rank": 3,
+      "isMax": true,
+      "benefits": ["多图上传", "IP 形象生图", "高级编辑", "品牌升级权益"]
+    }
+  ]
+}

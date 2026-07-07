@@ -1,0 +1,418 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id              String   @id @default(cuid())
+  phone           String?  @unique
+  email           String?  @unique
+  passwordHash    String?  @map("password_hash")
+  unifiedUsername String?  @unique @map("unified_username")
+  displayName     String?  @map("display_name")
+  brandUpgradeAt  DateTime? @map("brand_upgrade_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  cards           Card[]
+  claims          ClaimRequest[]
+  entityEditors   EntityEditor[]
+  contentRevisions ContentRevision[]
+  brandUpgrades   BrandUpgradeOrder[]
+
+  @@map("users")
+}
+
+model BrandUpgradeOrder {
+  id          String    @id @default(cuid())
+  userId      String    @map("user_id")
+  entityId    String?   @map("entity_id")
+  cardId      String?   @map("card_id")
+  planId      String    @default("brand_upgrade_500") @map("plan_id")
+  amountYuan  Int       @default(500) @map("amount_yuan")
+  status      String    @default("pending") // pending | paid | failed
+  externalRef String?   @map("external_ref")
+  paidAt      DateTime? @map("paid_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entity      Entity?   @relation(fields: [entityId], references: [id], onDelete: SetNull)
+  card        Card?     @relation(fields: [cardId], references: [id], onDelete: SetNull)
+
+  @@index([userId, status])
+  @@map("brand_upgrade_orders")
+}
+
+// â”€â”€â”€ Legacy card system (user-created business cards) â”€â”€â”€
+
+model Card {
+  id          String   @id @default(cuid())
+  userId      String?  @map("user_id")
+  slug        String   @unique
+  name        String
+  title       String?
+  company     String?
+  avatarUrl   String?  @map("avatar_url")
+  coverUrl    String?  @map("cover_url")
+  brandSlogan String?  @map("brand_slogan")
+  bio         String?
+  phone       String?
+  email       String?
+  wechat      String?
+  address     String?
+  theme       String   @default("brand_orange")
+  status      String   @default("published")
+  visibility  String   @default("private") // private | public | admin_hidden
+  isFeatured  Boolean  @default(false) @map("is_featured")
+  manualRankOrder Int? @map("manual_rank_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user            User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  sections        CardSection[]
+  mediaAssets     MediaAsset[]
+  videoLinks      VideoLink[]
+  leads           Lead[]
+  analyticsEvents AnalyticsEvent[]
+  brandUpgrades   BrandUpgradeOrder[]
+
+  @@index([visibility])
+  @@index([manualRankOrder])
+  @@map("cards")
+}
+
+model CardSection {
+  id        String @id @default(cuid())
+  cardId    String @map("card_id")
+  type      String
+  title     String
+  content   String
+  sortOrder Int    @default(0) @map("sort_order")
+  card      Card   @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@map("card_sections")
+}
+
+model MediaAsset {
+  id        String  @id @default(cuid())
+  cardId    String? @map("card_id")
+  entityId  String? @map("entity_id")
+  url       String
+  type      String
+  title     String?
+  sortOrder Int     @default(0) @map("sort_order")
+  card      Card?   @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  entity    Entity? @relation(fields: [entityId], references: [id], onDelete: Cascade)
+
+  @@map("media_assets")
+}
+
+model VideoLink {
+  id          String  @id @default(cuid())
+  cardId      String? @map("card_id")
+  entityId    String? @map("entity_id")
+  platform    String
+  url         String
+  title       String?
+  coverUrl    String? @map("cover_url")
+  embedUrl    String? @map("embed_url")
+  description String?
+  canEmbed    Boolean @default(false) @map("can_embed")
+  sortOrder   Int     @default(0) @map("sort_order")
+  card        Card?   @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  entity      Entity? @relation(fields: [entityId], references: [id], onDelete: Cascade)
+
+  @@map("video_links")
+}
+
+model Lead {
+  id            String   @id @default(cuid())
+  cardId        String?  @map("card_id")
+  entityId      String?  @map("entity_id")
+  visitorName   String?  @map("visitor_name")
+  visitorPhone  String?  @map("visitor_phone")
+  visitorWechat String?  @map("visitor_wechat")
+  message       String?
+  source        String   @default("save_card")
+  createdAt     DateTime @default(now()) @map("created_at")
+  card          Card?    @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  entity        Entity?  @relation(fields: [entityId], references: [id], onDelete: Cascade)
+
+  @@map("leads")
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  cardId    String   @map("card_id")
+  eventType String   @map("event_type")
+  metadata  String?
+  createdAt DateTime @default(now()) @map("created_at")
+  card      Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@map("analytics_events")
+}
+
+// â”€â”€â”€ Entity platform (city / company / person / brand / profession) â”€â”€â”€
+
+model Entity {
+  id            String   @id @default(cuid())
+  type          String // city | company | person | brand | profession
+  name          String
+  slug          String   @unique
+  subtype       String? // entrepreneur | lawyer | doctor | student | official | etc.
+  status        String   @default("draft") // draft | ai_generated | pending_review | published | claimed | verified | hidden
+  ownerUserId   String?  @map("owner_user_id")
+  isVerified    Boolean  @default(false) @map("is_verified")
+  isAiGenerated Boolean  @default(true) @map("is_ai_generated")
+  visibility    String   @default("private") // private | public | admin_hidden
+  isFeatured    Boolean  @default(false) @map("is_featured")
+  isOfficial    Boolean  @default(false) @map("is_official")
+  manualRankOrder Int?   @map("manual_rank_order")
+  likeCount     Int      @default(0) @map("like_count")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  profile       EntityProfile?
+  reports       EntityReport[]
+  sources       EntitySource[]
+  newsArticles  NewsArticle[]
+  mediaAssets   MediaAsset[]
+  videoLinks    VideoLink[]
+  leads         Lead[]
+  claims        ClaimRequest[]
+  auditLogs     AuditLog[]
+  editors       EntityEditor[]
+  revisions     ContentRevision[]
+
+  relationsFrom EntityRelation[] @relation("RelationFrom")
+  relationsTo   EntityRelation[] @relation("RelationTo")
+  jobItems      GenerationJobItem[]
+  brandUpgrades BrandUpgradeOrder[]
+  knowledgeSnapshots KnowledgeSnapshot[]
+  likes         EntityLike[]
+
+  @@index([type, status])
+  @@index([type, visibility])
+  @@index([isFeatured])
+  @@index([manualRankOrder])
+  @@map("entities")
+}
+
+model EntityProfile {
+  id             String  @id @default(cuid())
+  entityId       String  @unique @map("entity_id")
+  title          String?
+  subtitle       String?
+  summary        String?
+  slogan         String?
+  avatarUrl      String? @map("avatar_url")
+  coverUrl       String? @map("cover_url")
+  contentJson    String  @map("content_json") // sections, tags, keywords
+  seoTitle       String? @map("seo_title")
+  seoDescription String? @map("seo_description")
+  theme          String  @default("business_gold_dark")
+  entity         Entity  @relation(fields: [entityId], references: [id], onDelete: Cascade)
+
+  @@map("entity_profiles")
+}
+
+model EntityReport {
+  id          String   @id @default(cuid())
+  entityId    String   @map("entity_id")
+  reportType  String   @map("report_type") // brand | city | person_ip | propagation
+  title       String
+  summary     String?
+  contentJson String   @map("content_json")
+  scoreJson   String?  @map("score_json")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  entity      Entity   @relation(fields: [entityId], references: [id], onDelete: Cascade)
+
+  @@index([entityId, reportType])
+  @@map("entity_reports")
+}
+
+model EntitySource {
+  id              String   @id @default(cuid())
+  entityId        String   @map("entity_id")
+  sourceType      String   @map("source_type") // official | news | wiki | government | user_upload
+  title           String
+  url             String?
+  excerpt         String?
+  confidenceScore Float    @default(0.5) @map("confidence_score")
+  createdAt       DateTime @default(now()) @map("created_at")
+  entity          Entity   @relation(fields: [entityId], references: [id], onDelete: Cascade)
+
+  @@map("entity_sources")
+}
+
+model EntityRelation {
+  id           String @id @default(cuid())
+  fromEntityId String @map("from_entity_id")
+  toEntityId   String @map("to_entity_id")
+  relationType String @map("relation_type") // founder | headquartered_in | belongs_to | competitor | industry
+  label        String?
+  fromEntity   Entity @relation("RelationFrom", fields: [fromEntityId], references: [id], onDelete: Cascade)
+  toEntity     Entity @relation("RelationTo", fields: [toEntityId], references: [id], onDelete: Cascade)
+
+  @@unique([fromEntityId, toEntityId, relationType])
+  @@map("entity_relations")
+}
+
+model NewsArticle {
+  id          String   @id @default(cuid())
+  entityId    String   @map("entity_id")
+  title       String
+  url         String
+  source      String?
+  publishedAt String?  @map("published_at")
+  excerpt     String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  entity      Entity   @relation(fields: [entityId], references: [id], onDelete: Cascade)
+
+  @@map("news_articles")
+}
+
+model GenerationJob {
+  id           String   @id @default(cuid())
+  jobType      String   @map("job_type") // batch_city | batch_company | batch_person | batch_mixed
+  inputText    String   @map("input_text")
+  entityType   String?  @map("entity_type") // auto | city | company | person
+  generatePage Boolean  @default(true) @map("generate_page")
+  generateReport Boolean @default(true) @map("generate_report")
+  fetchNews    Boolean  @default(true) @map("fetch_news")
+  status       String   @default("pending") // pending | running | completed | failed
+  totalCount   Int      @default(0) @map("total_count")
+  successCount Int      @default(0) @map("success_count")
+  failedCount  Int      @default(0) @map("failed_count")
+  errorLog     String?  @map("error_log")
+  optionsJson  String?  @map("options_json")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  items        GenerationJobItem[]
+
+  @@map("generation_jobs")
+}
+
+model GenerationJobItem {
+  id           String   @id @default(cuid())
+  jobId        String   @map("job_id")
+  name         String
+  entityType   String?  @map("entity_type")
+  entityId     String?  @map("entity_id")
+  status       String   @default("pending") // pending | running | completed | failed
+  error        String?
+  researchLog  String?  @map("research_log") // JSON: ResearchStep[]
+  createdAt    DateTime @default(now()) @map("created_at")
+  job          GenerationJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  entity       Entity?  @relation(fields: [entityId], references: [id], onDelete: SetNull)
+
+  @@map("generation_job_items")
+}
+
+model ClaimRequest {
+  id         String   @id @default(cuid())
+  entityId   String   @map("entity_id")
+  userId     String?  @map("user_id")
+  claimType  String   @map("claim_type") // person | company | city
+  proofText  String?  @map("proof_text")
+  proofFiles String?  @map("proof_files")
+  status     String   @default("pending") // pending | approved | rejected
+  reviewNote String?  @map("review_note")
+  createdAt  DateTime @default(now()) @map("created_at")
+  entity     Entity   @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("claim_requests")
+}
+
+model EntityEditor {
+  id        String   @id @default(cuid())
+  entityId  String   @map("entity_id")
+  userId    String   @map("user_id")
+  role      String   @default("editor") // editor | owner_delegate
+  grantedBy String?  @map("granted_by")
+  createdAt DateTime @default(now()) @map("created_at")
+  entity    Entity   @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([entityId, userId])
+  @@index([userId])
+  @@map("entity_editors")
+}
+
+model ContentRevision {
+  id          String   @id @default(cuid())
+  entityId    String   @map("entity_id")
+  userId      String?  @map("user_id")
+  action      String
+  beforeJson  String?  @map("before_json")
+  afterJson   String?  @map("after_json")
+  note        String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  entity      Entity   @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([entityId, createdAt])
+  @@map("content_revisions")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  entityId  String   @map("entity_id")
+  action    String
+  details   String?
+  riskFlags String?  @map("risk_flags")
+  createdAt DateTime @default(now()) @map("created_at")
+  entity    Entity   @relation(fields: [entityId], references: [id], onDelete: Cascade)
+
+  @@map("audit_logs")
+}
+model PersonKnowledgeCache {
+  id          String   @id
+  name        String
+  candidateId String   @map("candidate_id")
+  source      String
+  title       String
+  summary     String?
+  url         String?
+  rawJson     String?  @map("raw_json")
+  updatedAt   DateTime @default(now()) @map("updated_at")
+
+  @@unique([name, candidateId])
+  @@index([name, updatedAt])
+  @@map("person_knowledge_cache")
+}
+
+model KnowledgeSnapshot {
+  id          String   @id @default(cuid())
+  entityId    String?  @map("entity_id")
+  entityName  String   @map("entity_name")
+  entityType  String   @map("entity_type")
+  sourceType  String   @map("source_type") // baike | wiki | web | gov
+  title       String
+  url         String?
+  rawText     String?  @map("raw_text")
+  cleanText   String   @map("clean_text")
+  charCount   Int      @default(0) @map("char_count")
+  fetchStatus String   @default("ok") @map("fetch_status") // ok | partial | failed
+  fetchedAt   DateTime @default(now()) @map("fetched_at")
+  entity      Entity?  @relation(fields: [entityId], references: [id], onDelete: SetNull)
+
+  @@index([entityName, entityType])
+  @@index([entityId])
+  @@map("knowledge_snapshots")
+}
+
+model EntityLike {
+  id         String   @id @default(cuid())
+  entityId   String   @map("entity_id")
+  visitorKey String   @map("visitor_key")
+  createdAt  DateTime @default(now()) @map("created_at")
+  entity     Entity   @relation(fields: [entityId], references: [id], onDelete: Cascade)
+
+  @@unique([entityId, visitorKey])
+  @@index([entityId])
+  @@map("entity_likes")
+}

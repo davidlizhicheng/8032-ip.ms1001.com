@@ -3,24 +3,62 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "dev": "node --max-old-space-size=8192 ./node_modules/next/dist/bin/next dev -p 8032",
+    "build": "npx prisma generate && npx next build && node scripts/prepare-standalone.mjs",
+    "build:standalone-assets": "node scripts/prepare-standalone.mjs",
+    "start": "node --max-old-space-size=4096 .next/standalone/server.js",
+    "lint": "eslint",
+    "db:migrate": "npx prisma migrate dev",
+    "db:seed": "npx tsx prisma/seed.ts",
+    "db:setup": "npx prisma migrate dev && npx tsx prisma/seed.ts",
+    "db:deploy": "npx prisma migrate deploy",
+    "db:resolve": "npx prisma migrate resolve --applied 20260627180000_add_visibility_featured",
+    "fix-db": "tsx scripts/fix-database.ts",
+    "smoke": "node scripts/smoke-test-production.mjs",
+    "smoke:local": "node scripts/smoke-frontend.mjs",
+    "e2e:local": "node scripts/e2e-local.mjs",
+    "e2e:pipeline": "node scripts/e2e-pipeline-api.mjs",
+    "test:pipeline": "tsx scripts/test-person-pipeline.ts",
+    "test:e2e-company": "tsx scripts/test-e2e-company.ts",
+    "test:providers": "tsx scripts/test-all-providers.ts",
+    "test:lookup": "tsx scripts/test-lookup.mjs",
+    "test:upload": "node scripts/test-upload-display.mjs",
+    "refresh:weekly": "tsx scripts/weekly-refresh.ts",
+    "db:seed:cities": "tsx scripts/seed-city-ranking.ts",
+    "db:dedupe:entities": "tsx scripts/dedupe-entities.ts",
+    "postinstall": "npx prisma generate"
+  },
+  "prisma": {
+    "seed": "npx tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1075.0",
+    "@prisma/adapter-better-sqlite3": "^7.8.0",
+    "@prisma/client": "^7.8.0",
+    "better-sqlite3": "^12.11.1",
+    "dotenv": "^17.4.2",
+    "jsonrepair": "^3.14.1",
+    "lucide-react": "^1.21.0",
     "next": "16.2.9",
+    "openai": "^6.45.0",
+    "prisma": "^7.8.0",
+    "qrcode": "^1.5.4",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "react-hook-form": "^7.80.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "tailwindcss": "^4",
+    "tsx": "^4.22.4",
     "typescript": "^5"
   }
 }
