@@ -12,7 +12,7 @@ import {
 import { showcaseReportPath } from "@/lib/config/showcase-report";
 
 export const metadata: Metadata = {
-  title: "降龙18掌 · 品牌方法论 | AI品牌网",
+  title: "降龙18掌 · 品牌方法论 | 全球品牌创新名片网",
   description:
     "企业家个人IP降龙18掌与企业品牌复盘18步方法论介绍——立根塑型、内容升维、商业变现、破圈共生。",
 };

@@ -54,7 +54,7 @@ export function HomeHeroSwitcher() {
         <h1 className="mt-4 text-4xl font-black leading-tight tracking-normal sm:text-6xl">
           <span className="block">全球品牌创新名片网</span>
           <span className={dark ? "block text-yellow-100" : "block bg-gradient-to-r from-orange-500 via-rose-500 to-purple-500 bg-clip-text text-transparent"}>
-            全球品牌创新案例研究
+            全球品牌创新研究案例库
           </span>
           <span className={dark ? "block text-yellow-100" : "block bg-gradient-to-r from-orange-500 via-rose-500 to-purple-500 bg-clip-text text-transparent"}>
             品牌影响力名片榜

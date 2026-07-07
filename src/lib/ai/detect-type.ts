@@ -71,7 +71,7 @@ export const SLUG_MAP: Record<string, string> = {
   名创优品: "miniso", 字节跳动: "bytedance", 小米: "xiaomi",
   任正非: "renzhengfei", 马化腾: "ponyma", 王传福: "wangchuanfu",
   汪滔: "wangtao", 雷军: "leijun", 俞敏洪: "yuminhong",
-  董宇辉: "dongyuhui", 周鸿祎: "zhouhongyi", 何雪可: "hexueke-person",
+  董宇辉: "dongyuhui", 周鸿祎: "zhouhongyi",
 };
 
 export function entitySlug(name: string): string {

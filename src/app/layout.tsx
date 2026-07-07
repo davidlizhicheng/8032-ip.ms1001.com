@@ -10,9 +10,9 @@ const geist = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "AI城市企业人物品牌网 | 超级品牌IP网",
+  title: "全球品牌创新名片网 | 全球品牌创新研究案例库 · 品牌影响力名片榜",
   description:
-    "批量生成城市、企业、人物品牌档案与传播分析报告，支持新闻抓取、认领认证、关系图谱",
+    "全球品牌创新研究案例库、品牌影响力名片榜；城市/企业/人物品牌档案、认领认证、案例研究与 AI 影响力评分。",
 };
 
 export default function RootLayout({

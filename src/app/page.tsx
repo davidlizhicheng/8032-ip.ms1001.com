@@ -62,7 +62,7 @@ export default async function HomePage({ searchParams }: Props) {
           </div>
           <div>
             <span className="font-semibold text-slate-900">全球品牌创新名片网</span>
-            <p className="text-xs text-slate-500">全球品牌创新案例研究与品牌影响力名片榜</p>
+            <p className="text-xs text-slate-500">全球品牌创新研究案例库 · 品牌影响力名片榜</p>
           </div>
         </Link>
         <div className="flex items-center gap-3">
@@ -143,7 +143,7 @@ export default async function HomePage({ searchParams }: Props) {
       </main>
 
       <footer className="relative border-t border-slate-200 bg-white/60 py-6 text-center text-sm text-slate-500">
-        全球品牌创新名片网 · 全球品牌创新案例研究与品牌影响力名片榜 · ip.ms1001.com
+        全球品牌创新名片网 · 全球品牌创新研究案例库 · 品牌影响力名片榜 · ip.ms1001.com
       </footer>
     </div>
   );

@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { parseCardInfo } from "../src/lib/ai/parse-card";
 
-const sample = `我叫何雪可，是深圳市超级品牌顾问有限公司董事长助理，负责品牌战略咨询、品牌营销、爆品打造。电话18820289859，邮箱coco@chaojipinpai.com。`;
+const sample = `我叫张明，是某品牌咨询公司项目总监，负责品牌战略咨询、品牌营销、爆品打造。电话13800138000，邮箱demo@example.com。`;
 
 async function main() {
   const result = await parseCardInfo(sample);

@@ -9,34 +9,10 @@ const prisma = new PrismaClient({ adapter });
 
 const CITIES = ["深圳", "广州", "杭州", "成都", "苏州"];
 const COMPANIES = ["华为", "腾讯", "比亚迪", "大疆", "蜜雪冰城"];
-const PERSONS = ["任正非", "马化腾", "王传福", "雷军", "何雪可"];
+const PERSONS = ["任正非", "马化腾", "王传福", "雷军", "董明珠"];
 
 async function seedCard() {
-  const existing = await prisma.card.findUnique({ where: { slug: "hexueke" } });
-  if (existing) return;
-
-  await prisma.card.create({
-    data: {
-      slug: "hexueke",
-      name: "何雪可",
-      title: "董事长助理 / 项目总监",
-      company: "深圳市超级品牌顾问有限公司",
-      brandSlogan: "超级品牌战略咨询，帮助企业打造增长型品牌",
-      bio: "长期参与企业品牌咨询与项目管理，服务企业品牌升级与增长转型。",
-      phone: "18820289859",
-      email: "coco@chaojipinpai.com",
-      address: "深圳市",
-      theme: "business_gold_dark",
-      status: "published",
-      sections: {
-        create: [
-          { type: "business", title: "业务介绍", content: "品牌战略、品牌营销、爆品打造、企业增长咨询", sortOrder: 0 },
-          { type: "experience", title: "过往经历", content: "担任深圳市超级品牌顾问有限公司董事长助理", sortOrder: 1 },
-        ],
-      },
-    },
-  });
-  console.log("Seeded card: /u/hexueke");
+  // 不再预置具体人物名片；由用户自行创建。
 }
 
 async function seedEntities() {
@@ -50,7 +26,7 @@ async function seedEntities() {
     const slugMap: Record<string, string> = {
       深圳: "shenzhen", 广州: "guangzhou", 杭州: "hangzhou", 成都: "chengdu", 苏州: "suzhou",
       华为: "huawei", 腾讯: "tencent", 比亚迪: "byd", 大疆: "dji", 蜜雪冰城: "mixue",
-      任正非: "renzhengfei", 马化腾: "ponyma", 王传福: "wangchuanfu", 雷军: "leijun", 何雪可: "hexueke-person",
+      任正非: "renzhengfei", 马化腾: "ponyma", 王传福: "wangchuanfu", 雷军: "leijun", 董明珠: "dongmingzhu-person",
     };
     const slug = slugMap[item.name];
     if (!slug) continue;

@@ -57,7 +57,7 @@ export async function POST(request: NextRequest, { params }: Params) {
         ],
       },
     });
-    if (!user) return NextResponse.json({ error: "未找到该用户，请确认对方已登录过品牌网" }, { status: 404 });
+    if (!user) return NextResponse.json({ error: "未找到该用户，请确认对方已登录过全球品牌创新名片网" }, { status: 404 });
     const editor = await prisma.entityEditor.upsert({
       where: { entityId_userId: { entityId: entity.id, userId: user.id } },
       update: { role: input.role, grantedBy: ctx.user.id },

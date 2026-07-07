@@ -136,7 +136,7 @@ export function HomeRankingSection({
       <div className="mb-4 flex items-end justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Showcase</p>
-          <h2 className="text-xl font-bold text-slate-900">全球品牌创新案例研究与品牌影响力名片榜</h2>
+          <h2 className="text-xl font-bold text-slate-900">全球品牌创新研究案例库 · 品牌影响力名片榜</h2>
           <p className="mt-1 text-xs text-slate-500">
             {isAdmin
               ? "管理员模式：拖动 ⋮⋮ 或 ↑↓ 调序；进入品牌页/报告页可改全部 AI 内容"

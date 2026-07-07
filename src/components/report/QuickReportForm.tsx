@@ -163,7 +163,7 @@ export function QuickReportForm({
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder={entityType === "person" ? "例如：何雪可、雷军" : entityType === "city" ? "例如：成都、杭州" : "例如：胖东来、华为"}
+            placeholder={entityType === "person" ? "例如：雷军、董明珠" : entityType === "city" ? "例如：成都、杭州" : "例如：胖东来、华为"}
             className="w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-900 outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
             required
             disabled={loading}
